@@ -1,0 +1,5 @@
+const CACHE='tx-resilience-commons-2.2.0';
+const CORE=['./','./index.html','./offline.html','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png','./README.md','./docs/CONTENT_MAP.md','./docs/CIVIC_LEGISLATIVE_LAYER.md','./docs/GOVERNMENT_SOURCE_INDEX.md','./data/civic_sources_2026-09-27.json'];
+self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting())));
+self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('tx-resilience-commons-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
+self.addEventListener('fetch',e=>{const r=e.request;if(r.method!=='GET')return;const u=new URL(r.url);if(u.origin!==self.location.origin)return;if(u.pathname.startsWith('/api/'))return;e.respondWith(caches.match(r).then(cached=>cached||fetch(r).then(resp=>{if(resp&&resp.ok)caches.open(CACHE).then(c=>c.put(r,resp.clone()));return resp}).catch(()=>r.mode==='navigate'?caches.match('./offline.html'):undefined)))})
